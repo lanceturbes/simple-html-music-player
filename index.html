@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Upload Player</title>
+  </head>
+  <body>
+    <label>
+      Upload Song
+      <input type="file" accept="audio/mpeg" />
+    </label>
+
+    <button id="play-button">Play</button>
+    <button id="pause-button">Pause</button>
+
+    <audio></audio>
+
+    <ul id="song-list"></ul>
+
+    <script type="module">
+      import * as IDB from "https://esm.sh/idb-keyval@6.2.1";
+
+      const audio = document.querySelector("audio");
+      const songListElement = document.querySelector("#song-list");
+
+      const playButton = document.getElementById("play-button");
+      playButton.addEventListener("click", () => {
+        audio.play();
+      });
+
+      const pauseButton = document.getElementById("pause-button");
+      pauseButton.addEventListener("click", () => {
+        audio.pause();
+      });
+
+      const input = document.querySelector("input");
+      input.addEventListener("change", (e) => {
+        // Get file that was selected by user
+        const file = e.target.files[0];
+
+        // Prepare to read file as array buffer (numbers representing bytes)
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          // Get array buffer from event of file finished loading
+          const arrayBuffer = e.target.result;
+
+          // Save array buffer to database, using file name as key
+          await IDB.set(file.name, arrayBuffer);
+
+          // Re-render the list of songs
+          await renderSongList();
+        };
+
+        // Start reading file
+        reader.readAsArrayBuffer(file);
+      });
+
+      function createSongDeleteButton(key) {
+        const button = document.createElement("button");
+        button.textContent = "Delete";
+        button.addEventListener("click", async () => {
+          // Delete song from database
+          await IDB.del(key);
+
+          // Re-render the list of songs
+          await renderSongList();
+        });
+        return button;
+      }
+
+      function createSongListItem(key) {
+        const li = document.createElement("li");
+
+        // Populate list item with song name
+        li.textContent = key;
+
+        // Add delete button to list item
+        document.createElement("button");
+        li.appendChild(createSongDeleteButton(key));
+
+        // Add click handler to list item
+        li.addEventListener("click", async () => {
+          // Get number array representing song out of database, finding by key
+          const buffer = await IDB.get(key);
+
+          // Reconstruct song from number array
+          const song = new Blob([buffer], { type: "audio/mpeg" });
+
+          // Create internal URL for song
+          const songURL = URL.createObjectURL(song);
+
+          // Update audio source and play song
+          audio.src = songURL;
+          audio.play();
+        });
+        return li;
+      }
+
+      async function createSongListItems() {
+        // Get all keys (song names) from database
+        const keys = await IDB.keys();
+
+        // For each song, create a list item
+        return keys.map(createSongListItem);
+      }
+
+      async function renderSongList() {
+        // Create array of list items for each song
+        const listItems = await createSongListItems();
+
+        // Replace child elements of ul with contents of listItems array
+        songListElement.replaceChildren(...listItems);
+      }
+
+      renderSongList();
+    </script>
+  </body>
+</html>
