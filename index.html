@@ -4,21 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Music Upload Player</title>
-  </head>
-  <body>
-    <label>
-      Upload Song
-      <input type="file" accept="audio/mpeg" />
-    </label>
-
-    <button id="play-button">Play</button>
-    <button id="pause-button">Pause</button>
-
-    <audio></audio>
-
-    <ul id="song-list"></ul>
-
-    <script type="module">
+    <script type="module" defer>
       import * as IDB from "https://esm.sh/idb-keyval@6.2.1";
 
       const audio = document.querySelector("audio");
@@ -39,10 +25,13 @@
         // Get file selected by user (first file in FileList)
         const file = e.target.files[0];
 
-        // Prepare to read file as array buffer (numbers representing bytes)
+        // Create a file reader
         const reader = new FileReader();
+
+        // Prepare to read file as array buffer (numbers representing bytes)
+        // When the file is done being read...
         reader.onload = async (e) => {
-          // Get array buffer from event of file finished loading
+          // Get array buffer that was just read
           const arrayBuffer = e.target.result;
 
           // Save array buffer to database, using file name as key
@@ -52,7 +41,7 @@
           await renderSongList();
         };
 
-        // Start reading file
+        // Kick off file reading process
         reader.readAsArrayBuffer(file);
       });
 
@@ -115,5 +104,18 @@
 
       renderSongList();
     </script>
+  </head>
+  <body>
+    <label>
+      Upload Song
+      <input type="file" accept="audio/mpeg" />
+    </label>
+
+    <button id="play-button">Play</button>
+    <button id="pause-button">Pause</button>
+
+    <audio></audio>
+
+    <ul id="song-list"></ul>
   </body>
 </html>
