@@ -36,7 +36,7 @@
 
       const input = document.querySelector("input");
       input.addEventListener("change", (e) => {
-        // Get file that was selected by user
+        // Get file selected by user (first file in FileList)
         const file = e.target.files[0];
 
         // Prepare to read file as array buffer (numbers representing bytes)
@@ -48,7 +48,7 @@
           // Save array buffer to database, using file name as key
           await IDB.set(file.name, arrayBuffer);
 
-          // Re-render the list of songs
+          // Re-render list of songs
           await renderSongList();
         };
 
@@ -63,7 +63,7 @@
           // Delete song from database
           await IDB.del(key);
 
-          // Re-render the list of songs
+          // Re-render list of songs
           await renderSongList();
         });
         return button;
@@ -81,13 +81,13 @@
 
         // Add click handler to list item
         li.addEventListener("click", async () => {
-          // Get number array representing song out of database, finding by key
+          // Search for song in database by key (song file name)
           const buffer = await IDB.get(key);
 
           // Reconstruct song from number array
           const song = new Blob([buffer], { type: "audio/mpeg" });
 
-          // Create internal URL for song
+          // Create internal data URL for song (to link to it in audio element)
           const songURL = URL.createObjectURL(song);
 
           // Update audio source and play song
@@ -101,12 +101,12 @@
         // Get all keys (song names) from database
         const keys = await IDB.keys();
 
-        // For each song, create a list item
+        // For each song, create list item
         return keys.map(createSongListItem);
       }
 
       async function renderSongList() {
-        // Create array of list items for each song
+        // Create array containing list item for every song
         const listItems = await createSongListItems();
 
         // Replace child elements of ul with contents of listItems array
